@@ -22,6 +22,7 @@ module.exports = async function (app) {
       for await (const stock of stocks) {
         const price = await fetchStockPrice(stock);
         let stockObject;
+        let likeCount;
         if (price === undefined) {
           stockObject = { "error": "invalid symbol" }
         } else {
@@ -29,9 +30,11 @@ module.exports = async function (app) {
         }
         
         if (like) {
-          await addLike(stock, req.ip);
+          const data = await addLike(stock, req.ip);
+          likeCount = data.likes;
+        } else {
+          likeCount = await getLikeCount(stock)
         }
-        const likeCount = await getLikeCount(stock)
         likeList.push(likeCount);
         stockObjects.push(stockObject);
       }
@@ -81,7 +84,7 @@ async function addLike(stock, ip) {
       await stockData.save();
     })
   }
-  
+  return stockData;
 }
 
 async function checkIfAlradyLiked(hashedIps, ip) {
